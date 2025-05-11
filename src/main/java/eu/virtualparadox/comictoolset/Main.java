@@ -3,6 +3,7 @@ package eu.virtualparadox.comictoolset;
 import com.beust.jcommander.JCommander;
 import eu.virtualparadox.comictoolset.command.AbstractCommand;
 import eu.virtualparadox.comictoolset.downloader.DownloaderCommand;
+import eu.virtualparadox.comictoolset.translator.client.TranslatorCommand;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,8 @@ public class Main {
      * New commands should be added here.
      */
     protected static final List<AbstractCommand> COMMAND_LIST = List.of(
-            new DownloaderCommand()
+            new DownloaderCommand(),
+            new TranslatorCommand()
     );
 
     /**
