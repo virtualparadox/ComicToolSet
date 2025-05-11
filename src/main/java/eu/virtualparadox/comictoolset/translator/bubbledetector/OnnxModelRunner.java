@@ -1,57 +1,129 @@
 package eu.virtualparadox.comictoolset.translator.bubbledetector;
 
 import ai.onnxruntime.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.Accessors;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.FloatBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * An ONNX model runner that detects comic speech bubbles in images.
- * Supports debug mode that generates a temporary annotated image with bounding boxes.
+ * An ONNX model runner that detects comic speech bubbles in images using a pre-trained ONNX model.
+ * <p>
+ * This class supports preprocessing, running inference, and optional debug rendering with bounding boxes.
+ * The model file is expected to be located within the JAR resources.
  */
+@Builder
+@Accessors(fluent = true)
 public final class OnnxModelRunner implements AutoCloseable {
 
-    private final OrtEnvironment env;
-    private final OrtSession session;
-    private final int inputSize;
-    private final float confidenceThreshold;
-    private final boolean debug;
-    private final ComicBubbleBoxDebugger debugger;
+    /** Path to the ONNX model resource (inside the JAR). */
+    private final String modelFilename;
 
-    /**
-     * Constructs a new ONNX model runner.
-     *
-     * @param modelPath           path to the ONNX model file
-     * @param inputSize           the expected square input size (e.g. 640 or 1024)
-     * @param confidenceThreshold detections below this confidence will be filtered out
-     * @param debug               whether to output a temporary annotated image with results
-     * @throws Exception if model loading fails
-     */
-    public OnnxModelRunner(final String modelPath,
-                           final int inputSize,
-                           final float confidenceThreshold,
-                           final boolean debug) throws Exception {
-        this.env = OrtEnvironment.getEnvironment();
-        this.session = env.createSession(modelPath, new OrtSession.SessionOptions());
+    /** Input image size (e.g. 640 or 1024). Assumes square input. */
+    private final int inputSize;
+
+    /** Minimum confidence threshold for detections to be considered valid. */
+    private final float confidenceThreshold;
+
+    /** Whether to enable debug mode (generates annotated image with bounding boxes). */
+    private final boolean debug;
+
+    /** ONNX runtime environment instance. */
+    private OrtEnvironment env;
+
+    /** ONNX inference session. */
+    private OrtSession session;
+
+    /** Optional debugger for drawing results on the image. */
+    private ComicBubbleBoxDebugger debugger;
+
+    /** Private constructor used by builder. */
+    private OnnxModelRunner(final String modelFilename,
+                            final int inputSize,
+                            final float confidenceThreshold,
+                            final boolean debug) {
+        this.modelFilename = modelFilename;
         this.inputSize = inputSize;
         this.confidenceThreshold = confidenceThreshold;
         this.debug = debug;
-        this.debugger = new ComicBubbleBoxDebugger();
     }
 
     /**
-     * Runs inference on the given image and returns the list of detected bubbles.
+     * Builder customization to initialize ONNX environment, session, and debugger during build.
+     */
+    public static class OnnxModelRunnerBuilder {
+        public OnnxModelRunner build() {
+            // check the inputs
+            if (modelFilename == null || modelFilename.isEmpty()) {
+                throw new IllegalArgumentException("Model filename cannot be null or empty");
+            }
+
+            if (inputSize <= 0) {
+                throw new IllegalArgumentException("Input size must be a positive integer");
+            }
+
+            if (confidenceThreshold < 0 || confidenceThreshold > 1) {
+                throw new IllegalArgumentException("Confidence threshold must be between 0 and 1");
+            }
+
+            // initialize the ONNX environment and session
+            try {
+                final OnnxModelRunner runner = new OnnxModelRunner(modelFilename, inputSize, confidenceThreshold, debug);
+                final String tempModelFilename = runner.extractModelToTempFile(modelFilename);
+
+                runner.env = OrtEnvironment.getEnvironment();
+                runner.session = runner.env.createSession(tempModelFilename, new OrtSession.SessionOptions());
+                runner.debugger = new ComicBubbleBoxDebugger();
+
+                return runner;
+            } catch (final Exception e) {
+                throw new RuntimeException("Failed to initialize OnnxModelRunner", e);
+            }
+        }
+    }
+
+    /**
+     * Extracts the model resource from the JAR to a temporary file on disk for ONNX Runtime compatibility.
      *
-     * @param imagePath path to the input image
-     * @return list of {@link ComicBubbleBox} results
-     * @throws Exception if preprocessing or inference fails
+     * @param modelFilename model path relative to the resource root (e.g. "models/bubble.onnx")
+     * @return absolute path to the extracted temporary model file
+     */
+    private String extractModelToTempFile(final String modelFilename) {
+        try (final InputStream in = getClass().getClassLoader().getResourceAsStream(modelFilename)) {
+            if (in == null) {
+                throw new IllegalArgumentException("Model resource not found: " + modelFilename);
+            }
+
+            final Path tempFile = Files.createTempFile("onnx-model-", ".onnx");
+            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            tempFile.toFile().deleteOnExit();
+            return tempFile.toAbsolutePath().toString();
+
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to extract ONNX model from JAR: " + modelFilename, e);
+        }
+    }
+
+    /**
+     * Runs inference on a given image path and returns a list of bounding boxes.
+     *
+     * @param imagePath path to an image file
+     * @return list of detected {@link ComicBubbleBox} instances
+     * @throws Exception if the image cannot be loaded or ONNX inference fails
      */
     public List<ComicBubbleBox> run(final Path imagePath) throws Exception {
         final BufferedImage image = ImageIO.read(imagePath.toFile());
@@ -73,7 +145,7 @@ public final class OnnxModelRunner implements AutoCloseable {
         final Object outputObj = result.get(0).getValue();
         final float[][] detections;
 
-        if (outputObj instanceof float[][][] output) {
+        if (outputObj instanceof final float[][][] output) {
             detections = (output.length == 1 && output[0][0].length == 6) ? output[0] : transpose(output[0]);
         } else {
             throw new RuntimeException("Unexpected output shape: " + outputObj.getClass());
@@ -91,10 +163,11 @@ public final class OnnxModelRunner implements AutoCloseable {
     }
 
     /**
-     * Transposes a 2D float matrix.
+     * Transposes a matrix (rows become columns).
+     * Used to adapt different ONNX output layouts.
      *
-     * @param original the input matrix
-     * @return the transposed matrix
+     * @param original original matrix [N x M]
+     * @return transposed matrix [M x N]
      */
     private float[][] transpose(final float[][] original) {
         final float[][] transposed = new float[original[0].length][original.length];
@@ -107,12 +180,12 @@ public final class OnnxModelRunner implements AutoCloseable {
     }
 
     /**
-     * Resizes an image using bilinear interpolation.
+     * Resizes a {@link BufferedImage} using bilinear interpolation.
      *
-     * @param originalImage input image
+     * @param originalImage the image to resize
      * @param width         target width
      * @param height        target height
-     * @return resized image
+     * @return resized image in RGB format
      */
     private BufferedImage resizeImage(final BufferedImage originalImage,
                                       final int width,
@@ -126,11 +199,11 @@ public final class OnnxModelRunner implements AutoCloseable {
     }
 
     /**
-     * Prepares image tensor in NCHW format normalized to [0, 1].
+     * Converts a resized RGB image into a normalized float tensor (NCHW format).
      *
-     * @param image input image
-     * @param size  expected input size
-     * @return float tensor (NCHW)
+     * @param image input image (already resized)
+     * @param size  expected input dimension
+     * @return float tensor normalized to [0,1] range
      */
     private float[] preprocessImage(final BufferedImage image,
                                     final int size) {
@@ -138,20 +211,20 @@ public final class OnnxModelRunner implements AutoCloseable {
         final int[] pixels = image.getRGB(0, 0, size, size, null, 0, size);
         for (int i = 0; i < size * size; i++) {
             final int rgb = pixels[i];
-            tensor[i] = ((rgb >> 16) & 0xFF) / 255.0f;               // Red
-            tensor[i + size * size] = ((rgb >> 8) & 0xFF) / 255.0f;  // Green
-            tensor[i + 2 * size * size] = (rgb & 0xFF) / 255.0f;     // Blue
+            tensor[i] = ((rgb >> 16) & 0xFF) / 255.0f;
+            tensor[i + size * size] = ((rgb >> 8) & 0xFF) / 255.0f;
+            tensor[i + 2 * size * size] = (rgb & 0xFF) / 255.0f;
         }
         return tensor;
     }
 
     /**
-     * Converts raw detection results into bounding boxes scaled to original image dimensions.
+     * Converts the raw model outputs into a list of bounding boxes.
      *
-     * @param detections model output (array of [cx, cy, w, h, conf, class])
-     * @param origWidth  original image width
-     * @param origHeight original image height
-     * @return list of filtered {@link ComicBubbleBox} instances
+     * @param detections raw ONNX outputs (shape: N x 6)
+     * @param origWidth  original image width before resizing
+     * @param origHeight original image height before resizing
+     * @return list of {@link ComicBubbleBox} with scaled coordinates
      */
     private List<ComicBubbleBox> extractBoxes(final float[][] detections,
                                               final int origWidth,
@@ -184,9 +257,9 @@ public final class OnnxModelRunner implements AutoCloseable {
     }
 
     /**
-     * Closes the underlying ONNX session.
+     * Closes the ONNX session. This should be called explicitly or via try-with-resources.
      *
-     * @throws Exception if closing fails
+     * @throws Exception if session closing fails
      */
     @Override
     public void close() throws Exception {
