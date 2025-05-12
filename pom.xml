@@ -20,9 +20,9 @@
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
         <jcommander.version>2.0</jcommander.version>
         <jackson.version>2.18.3</jackson.version>
-        <opencv.version>4.10.0-1.5.11</opencv.version>
         <junit.version>5.11.4</junit.version>
-        <tesseract.version>5.5.0</tesseract.version>
+        <tesseract.version>5.5.0-1.5.11</tesseract.version>
+        <leptonica.version>1.85.0-1.5.11</leptonica.version>
         <djl.version>0.27.0</djl.version>
     </properties>
 
@@ -77,18 +77,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>opencv-platform</artifactId>
-            <version>${opencv.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>javacv-platform</artifactId>
-            <version>1.5.11</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
@@ -96,9 +84,15 @@
         </dependency>
 
         <dependency>
-            <groupId>net.sourceforge.tess4j</groupId>
-            <artifactId>tess4j</artifactId>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>tesseract-platform</artifactId>
             <version>${tesseract.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>leptonica-platform</artifactId>
+            <version>${leptonica.version}</version>
         </dependency>
 
         <dependency>
@@ -107,35 +101,9 @@
             <version>${djl.version}</version>
         </dependency>
 
-        <!-- ONNX Runtime Engine -->
         <dependency>
             <groupId>ai.djl.onnxruntime</groupId>
             <artifactId>onnxruntime-engine</artifactId>
-            <version>${djl.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ai.djl</groupId>
-            <artifactId>model-zoo</artifactId>
-            <version>${djl.version}</version>
-        </dependency>
-
-        <!-- Image I/O -->
-        <dependency>
-            <groupId>ai.djl</groupId>
-            <artifactId>basicdataset</artifactId>
-            <version>${djl.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ai.djl.pytorch</groupId>
-            <artifactId>pytorch-engine</artifactId>
-            <version>${djl.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ai.djl.pytorch</groupId>
-            <artifactId>pytorch-model-zoo</artifactId>
             <version>${djl.version}</version>
         </dependency>
 
@@ -172,7 +140,8 @@
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>eu.virtualparadox.comictoolset.Main</mainClass>
                                 </transformer>
                             </transformers>

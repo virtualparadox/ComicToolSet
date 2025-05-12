@@ -55,10 +55,10 @@ public final class ComicBubbleBoxMerger {
      * @return enclosing {@link ComicBubbleBox}
      */
     private ComicBubbleBox mergeGroup(final List<ComicBubbleBox> group) {
-        float x1 = Float.MAX_VALUE;
-        float y1 = Float.MAX_VALUE;
-        float x2 = Float.MIN_VALUE;
-        float y2 = Float.MIN_VALUE;
+        int x1 = Integer.MAX_VALUE;
+        int y1 = Integer.MAX_VALUE;
+        int x2 = Integer.MIN_VALUE;
+        int y2 = Integer.MIN_VALUE;
         float sumConfidence = 0f;
 
         for (final ComicBubbleBox b : group) {

@@ -250,7 +250,7 @@ public final class OnnxModelRunner implements AutoCloseable {
             final float x2 = (cx + w / 2) * scaleX;
             final float y2 = (cy + h / 2) * scaleY;
 
-            boxes.add(new ComicBubbleBox(x1, y1, x2, y2, confidence, classId));
+            boxes.add(new ComicBubbleBox((int) x1, (int) y1, (int) x2, (int) y2, confidence, classId));
         }
 
         return boxes;
