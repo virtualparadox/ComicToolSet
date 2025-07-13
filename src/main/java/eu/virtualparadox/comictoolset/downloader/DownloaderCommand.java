@@ -2,8 +2,8 @@ package eu.virtualparadox.comictoolset.downloader;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.PathConverter;
 import eu.virtualparadox.comictoolset.command.AbstractCommand;
-import eu.virtualparadox.comictoolset.command.StringArgumentToPathConverter;
 
 import java.nio.file.Path;
 
@@ -36,7 +36,7 @@ public class DownloaderCommand extends AbstractCommand {
             names = "--outputFolder",
             description = "Folder where the issues will be stored",
             required = true,
-            converter = StringArgumentToPathConverter.class
+            converter = PathConverter.class
     )
     private Path outputFolder;
 

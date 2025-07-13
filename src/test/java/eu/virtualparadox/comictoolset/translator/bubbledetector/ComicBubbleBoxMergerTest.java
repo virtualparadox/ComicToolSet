@@ -2,6 +2,8 @@ package eu.virtualparadox.comictoolset.translator.bubbledetector;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import eu.virtualparadox.comictoolset.translator.bubblecollector.ComicBubbleBox;
+import eu.virtualparadox.comictoolset.translator.bubblecollector.merger.ComicBubbleBoxMerger;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -77,5 +79,17 @@ class ComicBubbleBoxMergerTest {
         assertEquals(10f, merged.x1(), 0.01);
         assertEquals(110f, merged.x2(), 0.01);
         assertEquals((0.9f + 0.8f + 0.85f) / 3, merged.confidence(), 0.01);
+    }
+
+    @Test
+    void testRealLife1() {
+        //4 = {ComicBubbleBox@2800} "ComicBubbleBox[x1=37, y1=550, x2=426, y2=959, confidence=0.67424774, classId=0]"
+        //9 = {ComicBubbleBox@2805} "ComicBubbleBox[x1=46, y1=550, x2=424, y2=815, confidence=0.8340647, classId=0]"
+        List<ComicBubbleBox> input = List.of(
+                new ComicBubbleBox(37, 550, 426, 959, 0.67424774f, 0),
+                new ComicBubbleBox(46, 550, 424, 815, 0.8340647f, 0)
+        );
+        List<ComicBubbleBox> result = merger.merge(input, 0.1f);
+        assertEquals(1, result.size());
     }
 }

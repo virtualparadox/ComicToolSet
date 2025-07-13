@@ -21,8 +21,6 @@
         <jcommander.version>2.0</jcommander.version>
         <jackson.version>2.18.3</jackson.version>
         <junit.version>5.11.4</junit.version>
-        <tesseract.version>5.5.0-1.5.11</tesseract.version>
-        <leptonica.version>1.85.0-1.5.11</leptonica.version>
         <djl.version>0.27.0</djl.version>
     </properties>
 
@@ -84,18 +82,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>tesseract-platform</artifactId>
-            <version>${tesseract.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>leptonica-platform</artifactId>
-            <version>${leptonica.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
             <version>${djl.version}</version>
@@ -105,6 +91,18 @@
             <groupId>ai.djl.onnxruntime</groupId>
             <artifactId>onnxruntime-engine</artifactId>
             <version>${djl.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>opencv-platform</artifactId>
+            <version>4.10.0-1.5.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>opencv</artifactId>
+            <version>4.10.0-1.5.11</version>
         </dependency>
 
     </dependencies>
