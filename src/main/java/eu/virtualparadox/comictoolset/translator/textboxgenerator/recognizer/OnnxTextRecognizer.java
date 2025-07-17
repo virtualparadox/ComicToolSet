@@ -6,14 +6,10 @@ import eu.virtualparadox.comictoolset.translator.textboxgenerator.assigner.Bubbl
 import eu.virtualparadox.comictoolset.translator.textboxgenerator.assigner.RecognizedTextWithMask;
 import eu.virtualparadox.comictoolset.translator.textboxgenerator.maskgenerator.*;
 import eu.virtualparadox.comictoolset.translator.textboxgenerator.processor.TextProcessor;
-import smile.clustering.DBSCAN;
-import smile.math.distance.EuclideanDistance;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.FloatBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
