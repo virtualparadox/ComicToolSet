@@ -17,13 +17,14 @@
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
         <selenium.version>4.32.0</selenium.version>
-        <webdrivermanager.version>6.1.0</webdrivermanager.version>
+        <webdrivermanager.version>6.1.1</webdrivermanager.version>
         <jcommander.version>2.0</jcommander.version>
         <jackson.version>2.18.3</jackson.version>
         <junit.version>5.11.4</junit.version>
         <tesseract.version>5.5.0-1.5.11</tesseract.version>
         <leptonica.version>1.85.0-1.5.11</leptonica.version>
         <djl.version>0.27.0</djl.version>
+        <ollama.version>1.0.100</ollama.version>
     </properties>
 
     <dependencies>
@@ -107,18 +108,13 @@
             <version>${djl.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.github.ollama4j/ollama4j -->
         <dependency>
-            <groupId>com.github.haifengl</groupId>
-            <artifactId>smile-core</artifactId>
-            <version>3.1.0</version> <!-- or latest -->
+            <groupId>io.github.ollama4j</groupId>
+            <artifactId>ollama4j</artifactId>
+            <version>${ollama.version}</version>
         </dependency>
 
-        <!-- Smile math (distance metrics, etc.) -->
-        <dependency>
-            <groupId>com.github.haifengl</groupId>
-            <artifactId>smile-math</artifactId>
-            <version>2.6.0</version>
-        </dependency>
     </dependencies>
 
     <build>
